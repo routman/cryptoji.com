@@ -2,7 +2,6 @@ import Vue from 'vue'
 import App from './App.vue'
 var CryptoJS = require("crypto-js");
 import "@fontsource/montserrat/300.css";
-
 Vue.config.productionTip = false
 
 function ctoji(dec) { //map ascii printable characters to specific emoji faces
@@ -85,37 +84,55 @@ function jitoc(dec) {
 }
 
 var cryptoji = {
-  imessage: '',
-  omessage: '',
+  message: '',
+  xmessage: '',
   key: '',
-  ocryptoji: '',
-  icryptoji: '',
-  navi:'encrypt',
+  xkey: '',
+  cryptoji: '',
+  xcryptoji: '',
+  last: 'encrypt',
   encrypt: function() {
-    var cypher = CryptoJS.AES.encrypt(cryptoji.imessage, cryptoji.key).toString();
-    var sliced = cypher.slice(10);//remove U2FsdGVkX1
-    cryptoji.ocryptoji = '';
-    for (var i = 0; i < sliced.length; i++) {
-      var dec = sliced.codePointAt(i);
-      cryptoji.ocryptoji = cryptoji.ocryptoji + ctoji(dec);
+    if (cryptoji.message != cryptoji.xmessage || cryptoji.key != cryptoji.xkey) {
+      cryptoji.last = 'encrypt'
+      cryptoji.xmessage = cryptoji.message;
+      cryptoji.xkey = cryptoji.key;
+      var cypher = CryptoJS.AES.encrypt(cryptoji.message, cryptoji.key).toString();
+      var sliced = cypher.slice(10);//remove U2FsdGVkX1
+      cryptoji.cryptoji = '';
+      for (var i = 0; i < sliced.length; i++) {
+        var dec = sliced.codePointAt(i);
+        cryptoji.cryptoji = cryptoji.cryptoji + ctoji(dec);
+      }
     }
   },
   decrypt: function() {
-    cryptoji.icryptoji.replace(/[0-9]/g, '');
-    cryptoji.omessage = '';
-    var cypher = 'U2FsdGVkX1';
-
-    try {
-      //build cyphertext
-      for (var i = 0; i < cryptoji.icryptoji.length/2; i++) {
-        var dec = cryptoji.icryptoji.codePointAt(i * 2);
-        cypher = cypher + jitoc(dec);
+    if (cryptoji.cryptoji != cryptoji.xcryptoji || cryptoji.key != cryptoji.xkey ) {
+      cryptoji.last = 'decrypt'
+      cryptoji.xcryptoji = cryptoji.cryptoji;
+      cryptoji.xkey = cryptoji.key;
+      cryptoji.cryptoji.replace(/[0-9]/g, '');
+      cryptoji.message = '';
+      var cypher = 'U2FsdGVkX1';
+      try {
+        //build cyphertext
+        for (var i = 0; i < cryptoji.cryptoji.length/2; i++) {
+          var dec = cryptoji.cryptoji.codePointAt(i * 2);
+          cypher = cypher + jitoc(dec);
+        }
+        //decrypt
+        var bytes  = CryptoJS.AES.decrypt(cypher, cryptoji.key);
+        cryptoji.message = bytes.toString(CryptoJS.enc.Utf8);
+      } catch (error) {
+        cryptoji.message = '';
       }
-      //decrypt
-      var bytes  = CryptoJS.AES.decrypt(cypher, cryptoji.key);
-      cryptoji.omessage = bytes.toString(CryptoJS.enc.Utf8);;
-    } catch (error) {
-      cryptoji.omessage = 'unable to decrypt';
+    }
+  },
+  ncrypt: function() {
+    if (cryptoji.last == 'encrypt') {
+      cryptoji.encrypt();
+    }
+    else if (cryptoji.last == 'decrypt') {
+      cryptoji.decrypt();
     }
   }
 }

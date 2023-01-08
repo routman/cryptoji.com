@@ -1,51 +1,77 @@
 <template>
   <div id="app">
-    <div id="title">
-      <div class="title c1">c</div>
-      <div class="title c2">r</div>
-      <div class="title c3">y</div>
-      <div class="title c4">p</div>
-      <div class="title c5">t</div>
-      <div class="title c6">o</div>
-      <div class="title c7">j</div>
-      <div class="title c8">i</div>
-    </div>
+    <div class="logo c1">c</div>
+    <div class="logo c2">r</div>
+    <div class="logo c3">y</div>
+    <div class="logo c4">p</div>
+    <div class="logo c5">t</div>
+    <div class="logo c6">o</div>
+    <div class="logo c7">j</div>
+    <div class="logo c8">i</div>
 
     <div id="subtitle">encrypted emoji</div>
 
-    <div id="navi" class="outer">
-      <div class="navi btn" v-bind:class="{active: sot.navi == 'encrypt'}" @click="navi('encrypt')">encrypt</div>
-      <div class="navi btn" v-bind:class="{active: sot.navi == 'decrypt'}" @click="navi('decrypt')">decrypt</div>
-    </div>
+    <label for="message" class="label">✍️ message</label>
+    <div id="clear" class="label btn" @click="clear()">clear</div>
+    <textarea id="message" v-model="sot.message" @input="encrypt()" v-on:keyup="encrypt()" @change="encrypt()"></textarea>
 
-    <encrypt v-show="sot.navi == 'encrypt'" class="outer"/>
-    <decrypt v-show="sot.navi == 'decrypt'" class="outer"/>
+    <label for="key" class="label">🔑 secret key (optional)</label>
+    <input type="text" id="key" v-model="sot.key" @input="ncrypt()" v-on:keyup="ncrypt()" @change="ncrypt()">
+
+    <label for="cryptoji" class="label">🤓 cryptoji</label>
+    <div id="copy" class="label btn" @click="copy()"> {{ copytext }} </div>
+    <textarea v-model.trim="sot.cryptoji" @input="decrypt()" v-on:keyup="decrypt()" @change="decrypt()" id="cryptoji" ref="cryptoji"></textarea>
 
     <about id="about" class="outer"/>
 
-    <div id="footer">cryptoji &copy; {{ new Date().getFullYear() }}</div>
+    <div id="footer" class="outer">
+      cryptoji &copy; {{ new Date().getFullYear() }}<br>
+      <a class="link" href="https://github.com/routman/cryptoji.com" target="_blank" rel="noopener">source</a>
+      <a class="link" href="https://ncrypt.org" target="_blank" rel="noopener">ncrypt</a>
+      <a class="link" href="https://brainwallet.io" target="_blank" rel="noopener">brainwallet</a>
+      <a class="link" href="https://publicnote.com" target="_blank" rel="noopener">publicnote</a>
+    </div>
 
   </div>
 </template>
 
 <script>
-import encrypt from './components/encrypt.vue'
-import decrypt from './components/decrypt.vue'
 import about from './components/about.vue'
 
 export default {
   name: 'App',
   components: {
-    encrypt, decrypt, about
+    about
   },
   data: function() {
     return {
-      sot: this.$root.$data
+      sot: this.$root.$data,
+      copytext: 'copy'
     }
   },
   methods: {
-    navi: function(n) {
-      this.sot.navi = n;
+    encrypt: function() {
+      this.sot.encrypt();
+    },
+    decrypt: function() {
+      this.sot.decrypt();
+    },
+    ncrypt: function() {
+      this.sot.ncrypt();
+    },
+    clear: function() {
+      this.sot.message = '';
+      this.sot.key = '';
+      this.sot.cryptoji = '';
+    },
+    copy: function() {
+      this.$refs.cryptoji.select();
+      document.execCommand('copy');
+      this.copytext = 'copied!';
+      setTimeout(function(){
+        this.copytext = 'copy';
+        window.getSelection().removeAllRanges()
+      }.bind(this), 1200);
     }
   }
 }
@@ -55,7 +81,7 @@ export default {
 @import "assets/settings.scss";
 
 body {
-  margin: 12px;
+  margin: 20px;
 }
 
 #app {
@@ -66,20 +92,10 @@ body {
   font-size: 20px;
 }
 
-.outer {
-  width: 800px;
-  margin: 0 auto;
-}
-
-#title {
-  text-align: center;
-  font-size: 44px;
-  margin: 40px 0 0 0;
-}
-
-.title {
+.logo {
   display: inline-block;
-  margin: 0 5px;
+  margin: 0 9px 0 0;
+  font-size: 28px;
   user-select: none;
 }
 .c1 {
@@ -108,28 +124,11 @@ body {
 }
 
 #subtitle {
-  text-align: center;
-  font-size: 28px;
-  margin: 4px 0 40px 0;
-}
-
-.navi {
-  display: inline-block;
-  font-size: 28px;
-  margin: 8px 32px;
-}
-
-#navi {
-  text-align: center;
+  margin-top: 8px;
 }
 
 #about {
   margin-top: 40px;
-}
-
-#footer {
-  text-align: center;
-  margin: 40px auto;
 }
 
 .label {
@@ -148,6 +147,7 @@ body {
 
 .active {
   color: $color-primary;
+  text-decoration: underline;
 }
 
 input:focus, textarea:focus {
@@ -156,6 +156,7 @@ input:focus, textarea:focus {
   border-image: linear-gradient(to right, $color-accent 0%, $color-primary 100%);
   border-image-slice: 1;
   box-shadow: 2px 2px 0px 0px #c884ff;
+  padding: 9px;
 }
 
 textarea, input {
@@ -175,7 +176,7 @@ textarea, input {
 textarea {
   min-width: 100%;
   max-width: 100%;
-  min-height: 160px;
+  min-height: 220px;
 }
 
 input {
@@ -188,6 +189,19 @@ input {
   display: inline-block;
   cursor: pointer;
   color: $color-primary;
+  margin: 20px 32px 0 0;
+}
+
+#copy {
+  float: right;
+}
+
+#clear {
+  float: right;
+}
+
+#footer {
+  margin-bottom: 40px;
 }
 
 @media screen and (max-width: 824px) {
